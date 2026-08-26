@@ -1,0 +1,14 @@
+{
+  "name": "inventory-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root workspace for Inventory App (Frontend + Backend)",
+  "scripts": {
+    "backend": "npm start --prefix backend",
+    "backend:dev": "npm run dev --prefix backend",
+    "frontend": "npm start --prefix frontend",
+    "frontend:web": "npm run web --prefix frontend",
+    "frontend:android": "npm run android --prefix frontend",
+    "frontend:ios": "npm run ios --prefix frontend"
+  }
+}

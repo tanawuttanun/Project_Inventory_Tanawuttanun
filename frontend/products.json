@@ -1,0 +1,72 @@
+[
+  {
+    "id": "1",
+    "name": "Apple MagSafe Battery Pack",
+    "capacity": "1460 mAh",
+    "price": 3890,
+    "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYj2BRFvMSZ10HsNfgl5q6GKRvU2DNzrHABksPrt-wPQ&s=10"
+  },
+  {
+    "id": "2",
+    "name": "Anker PowerCore",
+    "capacity": "10000mAh",
+    "price": 990,
+    "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnO3_bBoKr0NMYKEkdfPfwr0sG65xJLIejJe382GcFCQ&s"
+  },
+  {
+    "id": "3",
+    "name": "Eloop E29",
+    "capacity": "30000 mAh",
+    "price": 1290,
+    "imageUrl": "https://img.advice.co.th/cdn-cgi/image/format=auto,width=700,quality=82,fit=contain/images_nas/pic_product4/A0134921/A0134921OK_BIG_2.jpg"
+  },
+  {
+    "id": "4",
+    "name": "ZMI Power Bank",
+    "capacity": "20000 mAh",
+    "price": 2490,
+    "imageUrl": "https://mercular.s3.ap-southeast-1.amazonaws.com/images/products/2023/12/Product/zmi-qb823-65w-20000mah-power-bank-side-view.jpg"
+  },
+  {
+    "id": "5",
+    "name": "Baseus Blade",
+    "capacity": "20000 mAh",
+    "price": 1990,
+    "imageUrl": "https://eu.baseus.com/cdn/shop/products/PPBL000301_Baseus_Blade_HD_Laptop_Power_Bank_100W_20000mAh_1.jpg?v=1688625333"
+  },
+  {
+    "id": "6",
+    "name": "Aukey Basix Mini",
+    "capacity": "10000 mAh",
+    "price": 890,
+    "imageUrl": "https://www.jib.co.th/img_master/product/original/2023032115330258517_1.jpg"
+  },
+  {
+    "id": "7",
+    "name": "Samsung Wireless Charger",
+    "capacity": "10000 mAh",
+    "price": 1590,
+    "imageUrl": "https://www.425degree.com/media/amasty/webp/wysiwyg/2020/03/Samsung_Wireless_Charger_Stand-4_jpg.webp"
+  },
+  {
+    "id": "8",
+    "name": "Remax RPP-167",
+    "capacity": "30000 mAh",
+    "price": 790,
+    "imageUrl": "https://down-th.img.susercontent.com/file/b644bb74c22f0bed0e053ef3b9815790"
+  },
+  {
+    "id": "9",
+    "name": "Xiaomi Power Bank 3",
+    "capacity": "20000 mAh",
+    "price": 1190,
+    "imageUrl": "https://inwfile.com/s-cw/m1r7bx.jpg"
+  },
+  {
+    "id": "10",
+    "name": "SANMAX SM200",
+    "capacity": "20000 mAh",
+    "price": 690,
+    "imageUrl": "https://th-live-01.slatic.net/p/a0329aecbb3412598dcc1710843c7656.jpg"
+  }
+]
