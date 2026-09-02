@@ -10,7 +10,7 @@ import {
   FlatList,
   Image,
   Modal,
-  Platform, // 🟢 นำเข้า Platform เพื่อเช็คว่ารันบนเว็บหรือมือถือ
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,13 +25,17 @@ import ProductCard from '../components/ProductCard';
 import { BRAND, COLORS, RADIUS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useFavorites } from '../context/FavoritesContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useProducts } from '../context/ProductsContext';
 
 export default function HomeScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { addToCart, resetCart } = useCart();
+  const { resetFavorites } = useFavorites();
   const { products, deleteProduct } = useProducts();
+  const { t } = useLanguage();
   
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<any>(null);
@@ -61,12 +65,26 @@ export default function HomeScreen() {
 
   const closeModal = () => setSelected(null);
 
-  const confirmAdd = () => {
+  const confirmAdd = async () => {
     if (!selected) return;
-    addToCart(selected, selectedColor, qty);
-    setJustAdded(true);
-    setTimeout(() => closeModal(), 700);
+    if (selected.stock <= 0) {
+      Alert.alert(t('common.error'), t('product.cannotAddOutOfStock'));
+      return;
+    }
+    const res = await addToCart(selected, selectedColor, qty);
+    if (res.ok) {
+      setJustAdded(true);
+      setTimeout(() => closeModal(), 800);
+    } else {
+      const errMsg = res.message || t('product.cannotAddOutOfStock');
+      if (Platform.OS === 'web') {
+        window.alert(errMsg);
+      } else {
+        Alert.alert(t('common.error'), errMsg);
+      }
+    }
   };
+
 
   // ✏️ ฟังก์ชันเปิดหน้าแก้ไขสินค้า
   const handleEditProduct = (item: any) => {
@@ -80,30 +98,28 @@ export default function HomeScreen() {
   // 🔴 ฟังก์ชันลบสินค้า (รองรับทั้ง Web และ Android/iOS พร้อม Alert)
   const handleDeleteProduct = (item: any) => {
     if (Platform.OS === 'web') {
-      // 🌐 กรณีรันบนเว็บ (Browser)
       const confirmDelete = window.confirm(`คุณต้องการลบ "${item.name}" ออกจากระบบใช่หรือไม่?`);
       if (confirmDelete) {
         deleteProduct(item.id).then((success: boolean) => {
           if (success) {
-            Alert.alert('สำเร็จ', `ลบสินค้า "${item.name}" เรียบร้อยแล้ว`);
+            Alert.alert(t('common.success'), `ลบสินค้า "${item.name}" เรียบร้อยแล้ว`);
           } else {
-            Alert.alert('ผิดพลาด', 'ไม่สามารถลบสินค้าได้ กรุณาลองใหม่อีกครั้ง');
+            Alert.alert(t('common.error'), 'ไม่สามารถลบสินค้าได้ กรุณาลองใหม่อีกครั้ง');
           }
         });
       }
     } else {
-      // 📱 กรณีรันบนมือถือ (Android Studio / Expo Go)
-      Alert.alert('ยืนยันการลบ', `คุณต้องการลบ "${item.name}" ออกจากระบบใช่หรือไม่?`, [
-        { text: 'ยกเลิก', style: 'cancel' },
+      Alert.alert(t('adminProduct.deleteConfirmTitle'), t('adminProduct.deleteConfirmMsg'), [
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'ลบ', 
+          text: t('common.delete'), 
           style: 'destructive', 
           onPress: async () => {
             const success = await deleteProduct(item.id);
             if (success) {
-              Alert.alert('สำเร็จ', `ลบสินค้า "${item.name}" เรียบร้อยแล้ว`);
+              Alert.alert(t('common.success'), `ลบสินค้า "${item.name}" เรียบร้อยแล้ว`);
             } else {
-              Alert.alert('ผิดพลาด', 'ไม่สามารถลบสินค้าได้ กรุณาลองใหม่อีกครั้ง');
+              Alert.alert(t('common.error'), 'ไม่สามารถลบสินค้าได้ กรุณาลองใหม่อีกครั้ง');
             }
           }
         }
@@ -111,15 +127,15 @@ export default function HomeScreen() {
     }
   };
 
-  // 🚪 ฟังก์ชันออกจากระบบ (แก้บั๊กชนแอนิเมชัน 100%)
-  const handleLogout = () => {
-    setMenuVisible(false); // 1. ปิด Modal ลงก่อน
-    
-    // 2. หน่วงเวลา 500ms ให้ชัวร์ว่า Modal ปิดสนิท แล้วเคลียร์ข้อมูล User
-    // เมื่อ user เป็น null ตัว _layout.tsx จะเตะกลับหน้า Login ให้อัตโนมัติ
-    setTimeout(() => {
-      logout(); 
-    }, 500);
+  // 🚪 ฟังก์ชันออกจากระบบ
+  const handleLogout = async () => {
+    setMenuVisible(false);
+    setTimeout(async () => {
+      resetCart();
+      resetFavorites();
+      await logout();
+      router.replace('/login');
+    }, 300);
   };
 
   return (
@@ -133,7 +149,7 @@ export default function HomeScreen() {
           
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.heroGreeting}>
-              สวัสดี{user ? `, ${user.name}` : ''} 👋
+              {t('home.greeting', { name: user?.name || 'User' })} 👋
             </Text>
             <Text style={styles.heroBrand}>
               {BRAND.name} · <Text style={{ color: COLORS.gold }}>{BRAND.productLine}</Text>
@@ -143,13 +159,13 @@ export default function HomeScreen() {
             <Ionicons name="battery-charging" size={22} color={COLORS.gold} />
           </View>
         </View>
-        <Text style={styles.heroTagline}>{BRAND.tagline}</Text>
+        <Text style={styles.heroTagline}>{t('home.heroSubtitle')}</Text>
 
         <View style={styles.searchWrap}>
           <Ionicons name="search" size={18} color={COLORS.grayText} />
           <TextInput
             style={styles.searchInput}
-            placeholder="ค้นหาพาวเวอร์แบงก์..."
+            placeholder={t('home.searchLabel') + '...'}
             placeholderTextColor={COLORS.grayText}
             value={query}
             onChangeText={setQuery}
@@ -160,13 +176,13 @@ export default function HomeScreen() {
       {/* Grid สินค้า */}
       <FlatList
         data={filtered}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
         contentContainerStyle={styles.grid}
         ListHeaderComponent={
           <Text style={styles.sectionTitle}>
-            สินค้าแนะนำ ({filtered.length})
+            {t('home.allProducts')} ({filtered.length})
           </Text>
         }
         renderItem={({ item }) => (
@@ -179,11 +195,11 @@ export default function HomeScreen() {
           />
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>ไม่พบสินค้าที่ค้นหา</Text>
+          <Text style={styles.emptyText}>{t('home.noProducts')}</Text>
         }
       />
 
-      {/* 🔴 1. Modal รายละเอียดสินค้า */}
+      {/* 🔴 1. Modal รายละเอียดสินค้า (Quick View) */}
       <Modal visible={!!selected} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -193,86 +209,115 @@ export default function HomeScreen() {
                   <Ionicons name="close" size={22} color={COLORS.navy} />
                 </TouchableOpacity>
 
-                <Image source={{ uri: selected.image }} style={styles.modalImage} />
+                <Image source={{ uri: selected.image || selected.imageUrl }} style={styles.modalImage} resizeMode="contain" />
 
                 <Text style={styles.modalName}>{selected.name}</Text>
                 <Text style={styles.modalModel}>
-                  รุ่น {selected.model} · {selected.capacity}
+                  {t('product.model')} {selected.model} · {selected.capacity}
                 </Text>
 
                 <View style={styles.modalPriceRow}>
                   <Text style={styles.modalPrice}>
                     {BRAND.currency}
-                    {selected.price.toLocaleString()}
+                    {Number(selected.price).toLocaleString()}
                   </Text>
-                  {selected.originalPrice && (
-                    <Text style={styles.modalOriginalPrice}>
-                      {BRAND.currency}
-                      {selected.originalPrice.toLocaleString()}
-                    </Text>
-                  )}
-                  <Text style={styles.stockText}>
-                    เหลือ {selected.stock} ชิ้น
+                  <Text style={[styles.stockText, selected.stock <= 0 && { color: COLORS.danger }]}>
+                    {selected.stock <= 0
+                      ? t('common.outOfStock')
+                      : t('product.inStockCount', { count: selected.stock })}
                   </Text>
                 </View>
 
                 {/* คุณสมบัติ */}
-                <View style={styles.featureList}>
-                  {selected.features.map((f: string, i: number) => (
-                    <View key={i} style={styles.featureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={COLORS.gold} />
-                      <Text style={styles.featureText}>{f}</Text>
-                    </View>
-                  ))}
-                </View>
+                {Array.isArray(selected.features) && selected.features.length > 0 && (
+                  <View style={styles.featureList}>
+                    {selected.features.map((f: string, i: number) => (
+                      <View key={i} style={styles.featureRow}>
+                        <Ionicons name="checkmark-circle" size={16} color={COLORS.gold} />
+                        <Text style={styles.featureText}>{f}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
 
                 {/* เลือกสี */}
-                <Text style={styles.optionLabel}>เลือกสี</Text>
-                <View style={styles.colorRow}>
-                  {selected.colors.map((c: string) => (
-                    <Pressable
-                      key={c}
-                      onPress={() => setSelectedColor(c)}
-                      style={[
-                        styles.colorDot,
-                        { backgroundColor: c },
-                        selectedColor === c && styles.colorDotActive,
-                      ]}
-                    />
-                  ))}
-                </View>
+                {Array.isArray(selected.colors) && selected.colors.length > 0 && (
+                  <>
+                    <Text style={styles.optionLabel}>{t('product.colorSelection')}</Text>
+                    <View style={styles.colorRow}>
+                      {selected.colors.map((c: string) => (
+                        <Pressable
+                          key={c}
+                          onPress={() => setSelectedColor(c)}
+                          style={[
+                            styles.colorDot,
+                            { backgroundColor: c },
+                            selectedColor === c && styles.colorDotActive,
+                          ]}
+                        />
+                      ))}
+                    </View>
+                  </>
+                )}
 
                 {/* จำนวน */}
-                <Text style={styles.optionLabel}>จำนวน</Text>
-                <View style={styles.qtyRow}>
-                  <TouchableOpacity
-                    style={styles.qtyBtn}
-                    onPress={() => setQty((q) => Math.max(1, q - 1))}
-                  >
-                    <Ionicons name="remove" size={18} color={COLORS.navy} />
-                  </TouchableOpacity>
-                  <Text style={styles.qtyText}>{qty}</Text>
-                  <TouchableOpacity
-                    style={styles.qtyBtn}
-                    onPress={() => setQty((q) => Math.min(selected.stock, q + 1))}
-                  >
-                    <Ionicons name="add" size={18} color={COLORS.navy} />
-                  </TouchableOpacity>
-                </View>
+                {selected.stock > 0 && (
+                  <>
+                    <Text style={styles.optionLabel}>{t('product.quantity')}</Text>
+                    <View style={styles.qtyRow}>
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => setQty((q) => Math.max(1, q - 1))}
+                      >
+                        <Ionicons name="remove" size={18} color={COLORS.navy} />
+                      </TouchableOpacity>
+                      <Text style={styles.qtyText}>{qty}</Text>
+                      <TouchableOpacity
+                        style={[styles.qtyBtn, qty >= selected.stock && { opacity: 0.4 }]}
+                        onPress={() => setQty((q) => Math.min(selected.stock, q + 1))}
+                        disabled={qty >= selected.stock}
+                      >
+                        <Ionicons name="add" size={18} color={COLORS.navy} />
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
 
+                {/* ปุ่มเพิ่มลงตะกร้า */}
                 <TouchableOpacity
-                  style={[styles.addBtn, justAdded && styles.addBtnSuccess]}
+                  style={[
+                    styles.addBtn,
+                    justAdded && styles.addBtnSuccess,
+                    selected.stock <= 0 && styles.addBtnDisabled
+                  ]}
                   onPress={confirmAdd}
-                  disabled={justAdded}
+                  disabled={justAdded || selected.stock <= 0}
                 >
                   <Ionicons
                     name={justAdded ? 'checkmark' : 'cart'}
                     size={18}
-                    color={COLORS.navy}
+                    color={selected.stock <= 0 ? COLORS.grayText : COLORS.navy}
                   />
-                  <Text style={styles.addBtnText}>
-                    {justAdded ? 'เพิ่มลงตะกร้าแล้ว' : `เพิ่มลงตะกร้า · ${BRAND.currency}${(selected.price * qty).toLocaleString()}`}
+                  <Text style={[styles.addBtnText, selected.stock <= 0 && { color: COLORS.grayText }]}>
+                    {justAdded
+                      ? t('home.addedSuccess')
+                      : selected.stock <= 0
+                      ? t('common.outOfStock')
+                      : `${t('product.addToCart')} · ${BRAND.currency}${(selected.price * qty).toLocaleString()}`}
                   </Text>
+                </TouchableOpacity>
+
+                {/* ปุ่มดูรายละเอียดสินค้าเต็ม */}
+                <TouchableOpacity
+                  style={styles.viewFullDetailBtn}
+                  onPress={() => {
+                    const idToView = selected.id;
+                    closeModal();
+                    router.push({ pathname: '/product/[id]', params: { id: idToView.toString() } });
+                  }}
+                >
+                  <Ionicons name="open-outline" size={16} color={COLORS.navy} />
+                  <Text style={styles.viewFullDetailText}>{t('home.viewDetail')}</Text>
                 </TouchableOpacity>
 
                 {/* 🔒 ปุ่มแก้ไขสินค้าสำหรับ Admin */}
@@ -282,7 +327,7 @@ export default function HomeScreen() {
                     onPress={() => handleEditProduct(selected)}
                   >
                     <Ionicons name="pencil" size={16} color={COLORS.navy} />
-                    <Text style={styles.editProductBtnText}>แก้ไขข้อมูลสินค้านี้</Text>
+                    <Text style={styles.editProductBtnText}>{t('adminProduct.editTitle')}</Text>
                   </TouchableOpacity>
                 )}
               </ScrollView>
@@ -302,46 +347,47 @@ export default function HomeScreen() {
 
           <View style={styles.menuLinks}>
             <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/'); }}>
-              <Text style={styles.menuText}>Home</Text>
+              <Text style={styles.menuText}>{t('nav.home')}</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/'); }}>
-              <Text style={styles.menuText}>Products</Text>
-            </TouchableOpacity>
-            
+
             <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/categories'); }}>
-              <Text style={styles.menuText}>Categories</Text>
+              <Text style={styles.menuText}>{t('nav.categories')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/orders'); }}>
+              <Text style={styles.menuText}>{t('nav.orders')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/brand'); }}>
-              <Text style={styles.menuText}>Stores</Text>
+              <Text style={styles.menuText}>{t('nav.brand')}</Text>
             </TouchableOpacity>
             
             {/* 🔒 โซนพิเศษสำหรับ Admin (Finances & เพิ่มสินค้า) */}
             {user?.role === 'admin' && (
               <>
                 <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/finances'); }}>
-                  <Text style={styles.menuText}>Finances</Text>
+                  <Text style={styles.menuText}>{t('nav.finances')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/add'); }}>
-                  <Text style={styles.menuText}>Add Product</Text>
+                  <Text style={styles.menuText}>{t('nav.add')}</Text>
                 </TouchableOpacity>
               </>
             )}
 
             <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/settings'); }}>
-              <Text style={styles.menuText}>Settings</Text>
+              <Text style={styles.menuText}>{t('nav.settings')}</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Log out</Text>
+            <Text style={styles.logoutText}>{t('home.logout')}</Text>
           </TouchableOpacity>
         </View>
       </Modal>
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.offWhite },
@@ -457,7 +503,21 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   addBtnSuccess: { backgroundColor: COLORS.success },
+  addBtnDisabled: { backgroundColor: '#E2E8F0', borderColor: '#CBD5E1' },
   addBtnText: { color: COLORS.navy, fontWeight: '800', fontSize: 14 },
+  viewFullDetailBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: COLORS.offWhite,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    height: 44,
+    marginBottom: SPACING.sm,
+  },
+  viewFullDetailText: { color: COLORS.navy, fontWeight: '700', fontSize: 13 },
   editProductBtn: {
     flexDirection: 'row',
     alignItems: 'center',

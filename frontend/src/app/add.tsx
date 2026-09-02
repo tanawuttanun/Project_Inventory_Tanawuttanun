@@ -6,23 +6,24 @@ import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND, COLORS, RADIUS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useProducts } from '../context/ProductsContext';
 
 const COLOR_OPTIONS = [
-  { label: 'น้ำเงิน', value: COLORS.navy },
-  { label: 'ทอง', value: COLORS.gold },
-  { label: 'ขาว', value: COLORS.white },
-  { label: 'ดำ', value: '#000000' },
+  { label: 'น้ำเงิน / Navy', value: COLORS.navy },
+  { label: 'ทอง / Gold', value: COLORS.gold },
+  { label: 'ขาว / White', value: COLORS.white },
+  { label: 'ดำ / Black', value: '#000000' },
 ];
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=800&q=80';
 
 export default function AddProductScreen() {
   const { user } = useAuth();
-  const { products, addProduct, updateProduct, customProducts, removeCustomProduct } = useProducts();
+  const { products, addProduct, updateProduct } = useProducts();
+  const { t, isEn } = useLanguage();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEditMode = !!id;
-
 
   const [name, setName] = useState('');
   const [model, setModel] = useState('');
@@ -72,17 +73,17 @@ export default function AddProductScreen() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!name.trim()) e.name = 'กรุณากรอกชื่อสินค้า';
-    if (!capacity.trim()) e.capacity = 'กรุณากรอกความจุแบตเตอรี่ เช่น 10,000mAh';
+    if (!name.trim()) e.name = t('adminProduct.nameRequired');
+    if (!capacity.trim()) e.capacity = t('adminProduct.capacityRequired');
     const priceNum = Number(price);
     if (!price.trim() || isNaN(priceNum) || priceNum <= 0) {
-      e.price = 'ราคาต้องเป็นตัวเลขมากกว่า 0';
+      e.price = t('adminProduct.priceRequired');
     }
     const stockNum = Number(stock);
     if (!stock.trim() || isNaN(stockNum) || stockNum < 0 || !Number.isInteger(stockNum)) {
-      e.stock = 'จำนวนสต๊อกต้องเป็นจำนวนเต็มไม่ติดลบ';
+      e.stock = t('adminProduct.stockRequired');
     }
-    if (selectedColors.length === 0) e.colors = 'เลือกอย่างน้อย 1 สี';
+    if (selectedColors.length === 0) e.colors = t('adminProduct.colorsRequired');
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -97,7 +98,6 @@ export default function AddProductScreen() {
     if (!validate()) return;
     setIsSubmitting(true);
 
-    // แปลง features จากข้อความแต่ละบรรทัดเป็น array
     const featuresList = features
       .split('\n')
       .map((item) => item.trim())
@@ -115,29 +115,27 @@ export default function AddProductScreen() {
     };
 
     if (isEditMode && id) {
-      // ✏️ แก้ไขสินค้าเดิม (PUT)
       const success = await updateProduct(id, productPayload);
       setIsSubmitting(false);
 
       if (success) {
-        Alert.alert('สำเร็จ', `แก้ไขสินค้า "${productPayload.name}" เรียบร้อยแล้ว`, [
-          { text: 'กลับหน้าแรก', onPress: () => router.push('/') },
+        Alert.alert(t('common.success'), `แก้ไขสินค้า "${productPayload.name}" เรียบร้อยแล้ว`, [
+          { text: t('common.confirm'), onPress: () => router.push('/') },
         ]);
       } else {
-        Alert.alert('ผิดพลาด', 'ไม่สามารถแก้ไขสินค้าได้ กรุณาลองใหม่อีกครั้ง');
+        Alert.alert(t('common.error'), 'ไม่สามารถแก้ไขสินค้าได้ กรุณาลองใหม่อีกครั้ง');
       }
     } else {
-      // ➕ เพิ่มสินค้าใหม่ (POST)
       const success = await addProduct(productPayload);
       setIsSubmitting(false);
 
       if (success) {
-        Alert.alert('สำเร็จ', `เพิ่มสินค้า "${productPayload.name}" ลงฐานข้อมูลเรียบร้อยแล้ว`, [
-          { text: 'ดูที่หน้าแรก', onPress: () => router.push('/') },
-          { text: 'เพิ่มอีก', onPress: resetForm, style: 'cancel' },
+        Alert.alert(t('common.success'), `เพิ่มสินค้า "${productPayload.name}" ลงฐานข้อมูลเรียบร้อยแล้ว`, [
+          { text: t('home.allProducts'), onPress: () => router.push('/') },
+          { text: t('adminProduct.addBtn'), onPress: resetForm, style: 'cancel' },
         ]);
       } else {
-        Alert.alert('ผิดพลาด', 'ไม่สามารถเพิ่มสินค้าได้ กรุณาลองใหม่อีกครั้ง');
+        Alert.alert(t('common.error'), 'ไม่สามารถเพิ่มสินค้าได้ กรุณาลองใหม่อีกครั้ง');
       }
     }
   };
@@ -158,7 +156,7 @@ export default function AddProductScreen() {
             onPress={() => router.replace('/')}
           >
             <Ionicons name="home" size={18} color={COLORS.navy} />
-            <Text style={styles.homeBtnText}>กลับไปยังหน้าแรก</Text>
+            <Text style={styles.homeBtnText}>{t('checkout.backToHome')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -168,36 +166,34 @@ export default function AddProductScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{isEditMode ? 'แก้ไขข้อมูลสินค้า' : 'เพิ่มสินค้าใหม่'}</Text>
+        <Text style={styles.title}>{isEditMode ? t('adminProduct.editTitle') : t('adminProduct.title')}</Text>
         <Text style={styles.subtitle}>
-          {isEditMode 
-            ? 'สำหรับผู้ดูแลร้าน - แก้ไขรายละเอียดสินค้าและอัปเดตไปยัง Database'
-            : 'สำหรับผู้ดูแลร้าน - เพิ่มพาวเวอร์แบงก์รุ่นใหม่เข้าสู่ระบบ Database'}
+          {isEditMode ? t('adminProduct.editSubtitle') : t('adminProduct.subtitle')}
         </Text>
 
-        <Field label="ชื่อสินค้า *" error={errors.name}>
+        <Field label={`${t('adminProduct.name')} *`} error={errors.name}>
           <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="เช่น PowerPay Ultra" placeholderTextColor={COLORS.grayText} />
         </Field>
         
-        <Field label="รหัสรุ่น">
+        <Field label={t('adminProduct.model')}>
           <TextInput style={styles.input} value={model} onChangeText={setModel} placeholder="เช่น PP-U40" placeholderTextColor={COLORS.grayText} />
         </Field>
         
-        <Field label="ความจุแบตเตอรี่ *" error={errors.capacity}>
+        <Field label={`${t('adminProduct.capacity')} *`} error={errors.capacity}>
           <TextInput style={styles.input} value={capacity} onChangeText={setCapacity} placeholder="เช่น 40,000mAh" placeholderTextColor={COLORS.grayText} />
         </Field>
 
         <View style={styles.row}>
-          <Field label="ราคา (บาท) *" error={errors.price} style={{ flex: 1 }}>
+          <Field label={`${t('adminProduct.price')} *`} error={errors.price} style={{ flex: 1 }}>
             <TextInput style={styles.input} value={price} onChangeText={setPrice} placeholder="1990" placeholderTextColor={COLORS.grayText} keyboardType="numeric" />
           </Field>
           <View style={{ width: SPACING.md }} />
-          <Field label="สต๊อก (ชิ้น) *" error={errors.stock} style={{ flex: 1 }}>
+          <Field label={`${t('adminProduct.stock')} *`} error={errors.stock} style={{ flex: 1 }}>
             <TextInput style={styles.input} value={stock} onChangeText={setStock} placeholder="50" placeholderTextColor={COLORS.grayText} keyboardType="numeric" />
           </Field>
         </View>
 
-        <Field label="ลิงก์รูปภาพ (ถ้าไม่ใส่จะใช้รูปตัวอย่าง)">
+        <Field label={t('adminProduct.image')}>
           <TextInput style={styles.input} value={image} onChangeText={setImage} placeholder="https://..." placeholderTextColor={COLORS.grayText} autoCapitalize="none" />
         </Field>
 
@@ -205,11 +201,11 @@ export default function AddProductScreen() {
           <Image source={{ uri: image.trim() || DEFAULT_IMAGE }} style={styles.preview} />
         )}
 
-        <Field label="จุดเด่นสินค้า (1 บรรทัดต่อ 1 ข้อ)">
+        <Field label={t('adminProduct.features')}>
           <TextInput style={[styles.input, styles.textArea]} value={features} onChangeText={setFeatures} placeholder="ชาร์จเร็ว 65W&#10;จอดิจิตอลแสดงเปอร์เซ็นต์" placeholderTextColor={COLORS.grayText} multiline numberOfLines={4} />
         </Field>
 
-        <Text style={styles.label}>สีที่มีจำหน่าย *</Text>
+        <Text style={styles.label}>{t('adminProduct.colors')} *</Text>
         <View style={styles.colorOptionRow}>
           {COLOR_OPTIONS.map((c) => {
             const active = selectedColors.includes(c.value);
@@ -231,10 +227,11 @@ export default function AddProductScreen() {
           <Ionicons name={isEditMode ? "save" : "add-circle"} size={18} color={COLORS.navy} />
           <Text style={styles.submitText}>
             {isSubmitting 
-              ? 'กำลังบันทึก...' 
-              : (isEditMode ? 'บันทึกการแก้ไขสินค้า' : 'เพิ่มสินค้าเข้าแคตตาล็อก')}
+              ? '...' 
+              : (isEditMode ? t('adminProduct.save') : t('adminProduct.addBtn'))}
           </Text>
         </TouchableOpacity>
+
 
         {isEditMode && (
           <TouchableOpacity 
@@ -243,21 +240,6 @@ export default function AddProductScreen() {
           >
             <Text style={styles.cancelText}>ยกเลิกและกลับหน้าแรก</Text>
           </TouchableOpacity>
-        )}
-
-        {/* ป้องกัน Error ด้วยการเช็ค customProducts && */}
-        {customProducts && customProducts.length > 0 && (
-          <View style={styles.customSection}>
-            <Text style={styles.label}>สินค้าที่เพิ่มโดยคุณ ({customProducts.length})</Text>
-            {customProducts.map((p: any) => (
-              <View key={p.id} style={styles.customItem}>
-                <Text style={styles.customItemName} numberOfLines={1}>{p.name}</Text>
-                <TouchableOpacity onPress={() => removeCustomProduct(p.id)}>
-                  <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -294,9 +276,6 @@ const styles = StyleSheet.create({
   submitText: { color: COLORS.navy, fontWeight: '800', fontSize: 14 },
   cancelBtn: { alignItems: 'center', justifyContent: 'center', height: 44, marginTop: SPACING.sm },
   cancelText: { color: COLORS.grayText, fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
-  customSection: { marginTop: SPACING.xl },
-  customItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.white, padding: SPACING.sm, borderRadius: RADIUS.sm, marginBottom: 8 },
-  customItemName: { flex: 1, fontSize: 13, color: COLORS.navy, marginRight: 8 },
   accessDeniedWrap: {
     flex: 1,
     alignItems: 'center',

@@ -1,19 +1,42 @@
 // src/app/categories.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING } from '../constants/theme';
-
-const CATEGORIES = [
-  { id: '1', title: 'Fast Charging', icon: 'flash', desc: 'ชาร์จเร็วทันใจ รองรับ PD' },
-  { id: '2', title: 'High Capacity', icon: 'battery-full', desc: 'ความจุสูง 20,000mAh ขึ้นไป' },
-  { id: '3', title: 'Wireless & MagSafe', icon: 'wifi', desc: 'ชาร์จไร้สาย ไม่ต้องพกสาย' },
-  { id: '4', title: 'Ultra Slim', icon: 'phone-portrait', desc: 'บางเฉียบ พกพาสะดวก' },
-];
+import { useLanguage } from '../context/LanguageContext';
 
 export default function CategoriesScreen() {
   const router = useRouter();
+  const { t, isEn } = useLanguage();
+
+  const categories = [
+    {
+      id: '1',
+      title: isEn ? 'Fast Charging' : 'ชาร์จเร็วพิเศษ',
+      icon: 'flash',
+      desc: isEn ? 'High-speed PD & QC power banks' : 'ชาร์จเร็วทันใจ รองรับ PD & Quick Charge',
+    },
+    {
+      id: '2',
+      title: isEn ? 'High Capacity' : 'ความจุสูงพิเศษ',
+      icon: 'battery-full',
+      desc: isEn ? '20,000mAh and above for multi-day usage' : 'ความจุสูง 20,000mAh ขึ้นไป ใช้งานได้หลายวัน',
+    },
+    {
+      id: '3',
+      title: isEn ? 'Wireless & MagSafe' : 'ไร้สาย & แม็กเซฟ',
+      icon: 'wifi',
+      desc: isEn ? 'Effortless magnetic snap & charging' : 'ชาร์จไร้สาย แปะติดแน่น ไม่ต้องพกสาย',
+    },
+    {
+      id: '4',
+      title: isEn ? 'Ultra Slim & Compact' : 'บางเฉียบ พกพาสะดวก',
+      icon: 'phone-portrait',
+      desc: isEn ? 'Lightweight and pocket-friendly form factor' : 'บางเบา พกพาสะดวก ใส่กระเป๋าเสื้อได้',
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -21,16 +44,15 @@ export default function CategoriesScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={COLORS.navy} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Categories</Text>
+        <Text style={styles.headerTitle}>{t('nav.categories')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <TouchableOpacity 
             key={cat.id} 
             style={styles.card}
             onPress={() => {
-              // อนาคตสามารถส่งพารามิเตอร์เพื่อกรองสินค้าได้
               router.push('/');
             }}
           >
@@ -48,6 +70,7 @@ export default function CategoriesScreen() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.offWhite },

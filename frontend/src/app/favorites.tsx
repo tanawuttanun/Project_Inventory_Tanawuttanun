@@ -7,41 +7,43 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ProductCard from '../components/ProductCard';
 import { COLORS, SPACING } from '../constants/theme';
 import { useFavorites } from '../context/FavoritesContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useProducts } from '../context/ProductsContext';
 
 export default function FavoritesScreen() {
   const { favoriteIds } = useFavorites();
   const { products } = useProducts();
+  const { t } = useLanguage();
   const router = useRouter();
 
-  const favProducts = products.filter((p: any) => favoriteIds.includes(p.id));
+  const favProducts = products.filter((p: any) => favoriteIds.includes(p.id?.toString()));
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>รายการโปรด</Text>
-        <Text style={styles.headerCount}>{favProducts.length} รายการ</Text>
+        <Text style={styles.headerTitle}>{t('favorites.title')}</Text>
+        <Text style={styles.headerCount}>
+          {favProducts.length} {t('favorites.countSuffix')}
+        </Text>
       </View>
 
       {favProducts.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Ionicons name="heart-outline" size={64} color={COLORS.border} />
-          <Text style={styles.emptyText}>ยังไม่มีสินค้าที่ถูกใจ</Text>
-          <Text style={styles.emptySub}>
-            กดไอคอนรูปหัวใจที่การ์ดสินค้าเพื่อบันทึกไว้ที่นี่
-          </Text>
+          <Text style={styles.emptyText}>{t('favorites.emptyTitle')}</Text>
+          <Text style={styles.emptySub}>{t('favorites.emptySub')}</Text>
         </View>
       ) : (
         <FlatList
           data={favProducts}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}
           contentContainerStyle={styles.grid}
           renderItem={({ item }) => (
             <ProductCard
               product={item}
-              onPress={() => router.push('/')}
+              onPress={() => router.push({ pathname: '/product/[id]', params: { id: item.id.toString() } })}
             />
           )}
         />
@@ -66,3 +68,4 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15, fontWeight: '700', color: COLORS.navy, marginTop: SPACING.sm },
   emptySub: { fontSize: 12, color: COLORS.grayText, textAlign: 'center' },
 });
+

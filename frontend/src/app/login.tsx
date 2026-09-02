@@ -15,10 +15,12 @@ import {
 } from 'react-native';
 import { BRAND, COLORS, RADIUS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,9 +33,8 @@ export default function LoginScreen() {
     const result = await login(email, password);
     setLoading(false);
     if (!result.ok) {
-      setError(result.message ?? 'เข้าสู่ระบบไม่สำเร็จ');
+      setError(result.message ?? t('auth.loginFailed'));
     }
-    // ถ้าสำเร็จ AuthContext จะอัปเดต user แล้ว _layout.tsx จะ redirect ให้อัตโนมัติ
   };
 
   return (
@@ -62,12 +63,12 @@ export default function LoginScreen() {
 
           {/* ฟอร์ม */}
           <View style={styles.form}>
-            <Text style={styles.label}>อีเมล</Text>
+            <Text style={styles.label}>{t('auth.emailLabel')}</Text>
             <View style={styles.inputWrap}>
               <Ionicons name="mail-outline" size={18} color={COLORS.gold} />
               <TextInput
                 style={styles.input}
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={email}
                 onChangeText={setEmail}
@@ -76,12 +77,12 @@ export default function LoginScreen() {
               />
             </View>
 
-            <Text style={styles.label}>รหัสผ่าน</Text>
+            <Text style={styles.label}>{t('auth.passwordLabel')}</Text>
             <View style={styles.inputWrap}>
               <Ionicons name="lock-closed-outline" size={18} color={COLORS.gold} />
               <TextInput
                 style={styles.input}
-                placeholder="อย่างน้อย 6 ตัวอักษร"
+                placeholder={t('auth.passwordPlaceholder')}
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={password}
                 onChangeText={setPassword}
@@ -107,7 +108,7 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator color={COLORS.navy} />
               ) : (
-                <Text style={styles.loginBtnText}>เข้าสู่ระบบ</Text>
+                <Text style={styles.loginBtnText}>{t('auth.loginBtn')}</Text>
               )}
             </TouchableOpacity>
 
@@ -116,19 +117,16 @@ export default function LoginScreen() {
               onPress={() => router.push('/register' as any)}
             >
               <Text style={styles.switchAuthText}>
-                ยังไม่มีบัญชี? <Text style={styles.switchAuthLink}>สมัครสมาชิก</Text>
+                {t('auth.noAccount')} <Text style={styles.switchAuthLink}>{t('auth.goToRegister')}</Text>
               </Text>
             </TouchableOpacity>
-
-            <Text style={styles.hint}>
-              * เดโม่: กรอกอีเมลและรหัสผ่าน (≥ 6 ตัวอักษร) เพื่อเข้าสู่ระบบ
-            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

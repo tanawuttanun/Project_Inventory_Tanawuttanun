@@ -17,9 +17,11 @@ import {
 } from 'react-native';
 import { API_ENDPOINTS } from '../constants/api';
 import { BRAND, COLORS, RADIUS, SPACING } from '../constants/theme';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,39 +36,39 @@ export default function RegisterScreen() {
     const trimmedEmail = email.trim().toLowerCase();
 
     if (!trimmedUsername) {
-      setError('กรุณากรอกชื่อผู้ใช้ (Username)');
+      setError(t('auth.usernameRequired'));
       return false;
     }
     if (trimmedUsername.length < 3) {
-      setError('ชื่อผู้ใช้ต้องมีความยาวอย่างน้อย 3 ตัวอักษร');
+      setError(t('auth.usernameMinLength'));
       return false;
     }
 
     if (!trimmedEmail) {
-      setError('กรุณากรอกอีเมล');
+      setError(t('auth.emailRequired'));
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      setError('รูปแบบอีเมลไม่ถูกต้อง เช่น user@example.com');
+      setError(t('auth.emailInvalid'));
       return false;
     }
 
     if (!password) {
-      setError('กรุณากรอกรหัสผ่าน');
+      setError(t('auth.passwordRequired'));
       return false;
     }
     if (password.length < 8) {
-      setError('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร');
+      setError(t('auth.passwordMinLength'));
       return false;
     }
 
     if (!confirmPassword) {
-      setError('กรุณายืนยันรหัสผ่าน');
+      setError(t('auth.confirmPasswordRequired'));
       return false;
     }
     if (password !== confirmPassword) {
-      setError('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+      setError(t('auth.passwordMismatch'));
       return false;
     }
 
@@ -93,18 +95,17 @@ export default function RegisterScreen() {
       setLoading(false);
 
       if (response.status === 201 || response.ok) {
-        // เคลียร์ค่า Form
         setUsername('');
         setEmail('');
         setPassword('');
         setConfirmPassword('');
 
         Alert.alert(
-          'สมัครสมาชิกสำเร็จ',
-          'บัญชีของคุณถูกสร้างเรียบร้อยแล้ว กรุณาเข้าสู่ระบบด้วยชื่อผู้ใช้หรืออีเมลของคุณ',
+          t('auth.registerSuccessTitle'),
+          t('auth.registerSuccessMsg'),
           [
             {
-              text: 'เข้าสู่ระบบ',
+              text: t('auth.loginBtn'),
               onPress: () => router.replace('/login'),
             },
           ]
@@ -112,21 +113,21 @@ export default function RegisterScreen() {
       } else if (response.status === 409) {
         const msg = data.error || 'ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้งานแล้ว';
         setError(msg);
-        Alert.alert('ข้อมูลซ้ำ', msg);
+        Alert.alert(t('common.error'), msg);
       } else if (response.status === 400) {
         const msg = data.error || 'ข้อมูลที่กรอกไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
         setError(msg);
-        Alert.alert('ข้อมูลไม่ถูกต้อง', msg);
+        Alert.alert(t('common.error'), msg);
       } else {
         const msg = data.error || 'ไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่อีกครั้ง';
         setError(msg);
-        Alert.alert('เกิดข้อผิดพลาด', msg);
+        Alert.alert(t('common.error'), msg);
       }
     } catch (err) {
       setLoading(false);
       const networkError = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ต';
       setError(networkError);
-      Alert.alert('การเชื่อมต่อล้มเหลว', networkError);
+      Alert.alert(t('common.error'), networkError);
     }
   };
 
@@ -149,20 +150,20 @@ export default function RegisterScreen() {
               <Ionicons name="person-add" size={36} color={COLORS.gold} />
             </View>
             <Text style={styles.brandName}>{BRAND.name}</Text>
-            <Text style={styles.productLine}>สมัครสมาชิก</Text>
+            <Text style={styles.productLine}>{t('auth.registerTitle')}</Text>
             <View style={styles.goldLine} />
-            <Text style={styles.tagline}>สร้างบัญชีใหม่เพื่อเริ่มต้นใช้งาน</Text>
+            <Text style={styles.tagline}>{t('auth.registerSubtitle')}</Text>
           </View>
 
           {/* ฟอร์มสมัครสมาชิก */}
           <View style={styles.form}>
             {/* 1. Username */}
-            <Text style={styles.label}>ชื่อผู้ใช้ (Username) *</Text>
+            <Text style={styles.label}>{t('auth.usernameLabel')} *</Text>
             <View style={styles.inputWrap}>
               <Ionicons name="person-outline" size={18} color={COLORS.gold} />
               <TextInput
                 style={styles.input}
-                placeholder="อย่างน้อย 3 ตัวอักษร"
+                placeholder={t('auth.usernamePlaceholder')}
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={username}
                 onChangeText={(text) => {
@@ -174,12 +175,12 @@ export default function RegisterScreen() {
             </View>
 
             {/* 2. Email */}
-            <Text style={styles.label}>อีเมล *</Text>
+            <Text style={styles.label}>{t('auth.emailLabel')} *</Text>
             <View style={styles.inputWrap}>
               <Ionicons name="mail-outline" size={18} color={COLORS.gold} />
               <TextInput
                 style={styles.input}
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={email}
                 onChangeText={(text) => {
@@ -192,12 +193,12 @@ export default function RegisterScreen() {
             </View>
 
             {/* 3. Password */}
-            <Text style={styles.label}>รหัสผ่าน (Password) *</Text>
+            <Text style={styles.label}>{t('auth.passwordLabel')} *</Text>
             <View style={styles.inputWrap}>
               <Ionicons name="lock-closed-outline" size={18} color={COLORS.gold} />
               <TextInput
                 style={styles.input}
-                placeholder="อย่างน้อย 8 ตัวอักษร"
+                placeholder={t('auth.passwordPlaceholder')}
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={password}
                 onChangeText={(text) => {
@@ -216,12 +217,12 @@ export default function RegisterScreen() {
             </View>
 
             {/* 4. Confirm Password */}
-            <Text style={styles.label}>ยืนยันรหัสผ่าน *</Text>
+            <Text style={styles.label}>{t('auth.confirmPasswordLabel')} *</Text>
             <View style={styles.inputWrap}>
               <Ionicons name="shield-checkmark-outline" size={18} color={COLORS.gold} />
               <TextInput
                 style={styles.input}
-                placeholder="กรอกรหัสผ่านอีกครั้ง"
+                placeholder={t('auth.confirmPasswordPlaceholder')}
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={confirmPassword}
                 onChangeText={(text) => {
@@ -251,7 +252,7 @@ export default function RegisterScreen() {
               {loading ? (
                 <ActivityIndicator color={COLORS.navy} />
               ) : (
-                <Text style={styles.submitBtnText}>สมัครสมาชิก</Text>
+                <Text style={styles.submitBtnText}>{t('auth.registerBtn')}</Text>
               )}
             </TouchableOpacity>
 
@@ -261,7 +262,7 @@ export default function RegisterScreen() {
               onPress={() => router.replace('/login')}
             >
               <Text style={styles.switchAuthText}>
-                มีบัญชีอยู่แล้ว? <Text style={styles.switchAuthLink}>เข้าสู่ระบบ</Text>
+                {t('auth.hasAccount')} <Text style={styles.switchAuthLink}>{t('auth.goToLogin')}</Text>
               </Text>
             </TouchableOpacity>
           </View>
@@ -270,6 +271,7 @@ export default function RegisterScreen() {
     </LinearGradient>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

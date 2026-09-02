@@ -15,5 +15,9 @@ export const API_ENDPOINTS = {
   FINANCES: `${API_BASE_URL}/api/finances`,
   CART: `${API_BASE_URL}/api/cart`,
   FAVORITES: `${API_BASE_URL}/api/favorites`,
+  FAVORITES_TOGGLE: `${API_BASE_URL}/api/favorites/toggle`,
+  CHECKOUT: `${API_BASE_URL}/api/checkout`,
+  ORDERS: `${API_BASE_URL}/api/orders`,
 };
+
 

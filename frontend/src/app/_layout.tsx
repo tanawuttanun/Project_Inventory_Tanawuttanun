@@ -13,15 +13,17 @@ import { COLORS } from '../constants/theme';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider, useCart } from '../context/CartContext';
 import { FavoritesProvider } from '../context/FavoritesContext';
+import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 import { ProductsProvider } from '../context/ProductsContext';
 
 function RootNavigator() {
   const { user, isLoading } = useAuth();
   const { totalItems } = useCart();
+  const { t } = useLanguage();
   const router = useRouter();
   const segments = useSegments();
 
-    // --- Auth guard: สลับหน้าอัตโนมัติตามสถานะล็อกอิน และสิทธิ์ผู้ใช้ ---
+  // --- Auth guard: สลับหน้าอัตโนมัติตามสถานะล็อกอิน และสิทธิ์ผู้ใช้ ---
   useEffect(() => {
     if (isLoading) return;
     const currentScreen = (segments as string[])[segments.length - 1];
@@ -71,7 +73,7 @@ function RootNavigator() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'หน้าแรก',
+            title: t('nav.home'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home" size={size} color={color} />
             ),
@@ -80,7 +82,7 @@ function RootNavigator() {
         <Tabs.Screen
           name="brand"
           options={{
-            title: 'แบรนด์',
+            title: t('nav.brand'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="ribbon" size={size} color={color} />
             ),
@@ -89,7 +91,7 @@ function RootNavigator() {
         <Tabs.Screen
           name="add"
           options={{
-            title: 'เพิ่มสินค้า',
+            title: t('nav.add'),
             // 🔒 แสดงแท็บเพิ่มสินค้าเฉพาะ Admin เท่านั้น
             href: isAdmin ? '/add' : null,
             tabBarIcon: ({ color, size }) => (
@@ -100,7 +102,7 @@ function RootNavigator() {
         <Tabs.Screen
           name="favorites"
           options={{
-            title: 'รายการโปรด',
+            title: t('nav.favorites'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="heart" size={size} color={color} />
             ),
@@ -109,7 +111,7 @@ function RootNavigator() {
         <Tabs.Screen
           name="cart"
           options={{
-            title: 'ตะกร้า',
+            title: t('nav.cart'),
             tabBarBadge: totalItems > 0 ? totalItems : undefined,
             tabBarBadgeStyle: { backgroundColor: COLORS.gold, color: COLORS.navy },
             tabBarIcon: ({ color, size }) => (
@@ -117,7 +119,19 @@ function RootNavigator() {
             ),
           }}
         />
-        {/* หน้า login, register, finances, settings, categories ถูกซ่อนจาก tab bar */}
+        {/* หน้าพิเศษที่ซ่อนจาก tab bar */}
+        <Tabs.Screen
+          name="product/[id]"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="orders"
+          options={{
+            href: null,
+          }}
+        />
         <Tabs.Screen
           name="finances"
           options={{
@@ -158,15 +172,17 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <ProductsProvider>
-          <CartProvider>
-            <FavoritesProvider>
-              <RootNavigator />
-            </FavoritesProvider>
-          </CartProvider>
-        </ProductsProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <ProductsProvider>
+            <CartProvider>
+              <FavoritesProvider>
+                <RootNavigator />
+              </FavoritesProvider>
+            </CartProvider>
+          </ProductsProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }
@@ -179,3 +195,4 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.navy,
   },
 });
+

@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_ENDPOINTS } from '../constants/api';
 import { BRAND, COLORS, RADIUS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface FinancesData {
   totalProducts: number;
@@ -41,6 +42,7 @@ interface FinancesData {
 export default function FinancesScreen() {
   const router = useRouter();
   const { user, token } = useAuth();
+  const { t, isEn } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,9 +67,9 @@ export default function FinancesScreen() {
 
       if (!response.ok) {
         if (response.status === 403) {
-          setError('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ เฉพาะ Admin เท่านั้น');
+          setError(isEn ? 'Access denied. Admin only.' : 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้ เฉพาะ Admin เท่านั้น');
         } else {
-          setError('ไม่สามารถดึงข้อมูลสถิติและการเงินได้');
+          setError(isEn ? 'Failed to fetch financial data.' : 'ไม่สามารถดึงข้อมูลสถิติและการเงินได้');
         }
         return;
       }
@@ -76,7 +78,7 @@ export default function FinancesScreen() {
       setData(result);
     } catch (err) {
       console.error('Finances fetch error:', err);
-      setError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+      setError(isEn ? 'Unable to connect to server.' : 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -100,16 +102,20 @@ export default function FinancesScreen() {
           <View style={styles.accessDeniedIconWrap}>
             <Ionicons name="shield-outline" size={48} color={COLORS.danger} />
           </View>
-          <Text style={styles.accessDeniedTitle}>คุณไม่มีสิทธิ์เข้าถึงหน้านี้</Text>
+          <Text style={styles.accessDeniedTitle}>
+            {isEn ? 'Access Denied' : 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้'}
+          </Text>
           <Text style={styles.accessDeniedDesc}>
-            เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถดูข้อมูลสถิติการเงินและคลังสินค้าได้
+            {isEn
+              ? 'Only administrators have access to view financial and warehouse statistics.'
+              : 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถดูข้อมูลสถิติการเงินและคลังสินค้าได้'}
           </Text>
           <TouchableOpacity
             style={styles.homeBtn}
             onPress={() => router.replace('/')}
           >
             <Ionicons name="home" size={18} color={COLORS.navy} />
-            <Text style={styles.homeBtnText}>กลับไปยังหน้าแรก</Text>
+            <Text style={styles.homeBtnText}>{t('checkout.backToHome')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -123,7 +129,7 @@ export default function FinancesScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={COLORS.navy} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Finances & Inventory</Text>
+        <Text style={styles.headerTitle}>{isEn ? 'Finances & Inventory' : 'สถิติการเงินและคลังสินค้า'}</Text>
         <TouchableOpacity onPress={onRefresh} style={styles.refreshBtn}>
           <Ionicons name="refresh" size={20} color={COLORS.navy} />
         </TouchableOpacity>
@@ -132,14 +138,16 @@ export default function FinancesScreen() {
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.gold} />
-          <Text style={styles.loadingText}>กำลังโหลดข้อมูลสถิติจาก Database...</Text>
+          <Text style={styles.loadingText}>
+            {isEn ? 'Loading statistics from database...' : 'กำลังโหลดข้อมูลสถิติจาก Database...'}
+          </Text>
         </View>
       ) : error ? (
         <View style={styles.centerContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={COLORS.danger} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={fetchFinances}>
-            <Text style={styles.retryBtnText}>ลองใหม่อีกครั้ง</Text>
+            <Text style={styles.retryBtnText}>{isEn ? 'Retry' : 'ลองใหม่อีกครั้ง'}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -150,7 +158,9 @@ export default function FinancesScreen() {
         >
           {/* บัตรสรุปมูลค่าคลังสินค้าจริง (Total Inventory Value Card) */}
           <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>มูลค่าสินค้าในคลังรวมทั้งหมด (MySQL)</Text>
+            <Text style={styles.balanceLabel}>
+              {isEn ? 'Total Inventory Valuation (MySQL)' : 'มูลค่าสินค้าในคลังรวมทั้งหมด (MySQL)'}
+            </Text>
             <Text style={styles.balanceAmount}>
               {BRAND.currency}
               {(data?.totalInventoryValue || 0).toLocaleString()}
@@ -158,11 +168,15 @@ export default function FinancesScreen() {
             <View style={styles.balanceStatsRow}>
               <View style={styles.statBox}>
                 <Ionicons name="cube-outline" size={16} color={COLORS.gold} />
-                <Text style={styles.statText}>สินค้า: {data?.totalProducts || 0} รายการ</Text>
+                <Text style={styles.statText}>
+                  {isEn ? `Products: ${data?.totalProducts || 0}` : `สินค้า: ${data?.totalProducts || 0} รายการ`}
+                </Text>
               </View>
               <View style={styles.statBox}>
                 <Ionicons name="layers-outline" size={16} color={COLORS.gold} />
-                <Text style={styles.statText}>สต็อกรวม: {(data?.totalStock || 0).toLocaleString()} ชิ้น</Text>
+                <Text style={styles.statText}>
+                  {isEn ? `Total Stock: ${(data?.totalStock || 0).toLocaleString()} pcs` : `สต็อกรวม: ${(data?.totalStock || 0).toLocaleString()} ชิ้น`}
+                </Text>
               </View>
             </View>
           </View>
@@ -170,11 +184,11 @@ export default function FinancesScreen() {
           {/* สินค้าใกล้หมด (Low Stock Warning) */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>
-              สินค้าใกล้หมดสต็อก ({data?.lowStockCount || 0})
+              {isEn ? `Low Stock Items (${data?.lowStockCount || 0})` : `สินค้าใกล้หมดสต็อก (${data?.lowStockCount || 0})`}
             </Text>
             {data && data.lowStockCount > 0 && (
               <View style={styles.warningBadge}>
-                <Text style={styles.warningBadgeText}>ต้องเติมสต็อก</Text>
+                <Text style={styles.warningBadgeText}>{isEn ? 'Replenish' : 'ต้องเติมสต็อก'}</Text>
               </View>
             )}
           </View>
@@ -200,12 +214,12 @@ export default function FinancesScreen() {
                       {item.name}
                     </Text>
                     <Text style={styles.lowStockModel}>
-                      รุ่น {item.model} · {item.capacity}
+                      {t('product.model')} {item.model} · {item.capacity}
                     </Text>
                   </View>
                   <View style={styles.lowStockBadge}>
                     <Text style={styles.lowStockCountText}>
-                      เหลือ {item.stock} ชิ้น
+                      {t('product.inStockCount', { count: item.stock })}
                     </Text>
                   </View>
                 </View>
@@ -214,13 +228,15 @@ export default function FinancesScreen() {
           ) : (
             <View style={styles.emptyCard}>
               <Ionicons name="checkmark-circle-outline" size={28} color={COLORS.success} />
-              <Text style={styles.emptyCardText}>สต็อกสินค้าทุกรายการอยู่ในเกณฑ์ปกติ</Text>
+              <Text style={styles.emptyCardText}>
+                {isEn ? 'All product stock levels are normal' : 'สต็อกสินค้าทุกรายการอยู่ในเกณฑ์ปกติ'}
+              </Text>
             </View>
           )}
 
           {/* ส่วนรายรับ-รายจ่าย & ประวัติธุรกรรม */}
           <View style={[styles.sectionHeaderRow, { marginTop: SPACING.lg }]}>
-            <Text style={styles.sectionTitle}>ธุรกรรมและรายรับ-รายจ่าย</Text>
+            <Text style={styles.sectionTitle}>{isEn ? 'Transactions & Orders' : 'ธุรกรรมและคำสั่งซื้อ'}</Text>
           </View>
 
           <View style={styles.noticeCard}>
@@ -228,23 +244,14 @@ export default function FinancesScreen() {
               <Ionicons name="information-circle" size={24} color={COLORS.gold} />
             </View>
             <View style={styles.noticeInfo}>
-              <Text style={styles.noticeTitle}>ยังไม่มีข้อมูลธุรกรรมในระบบ</Text>
-              <Text style={styles.noticeDesc}>
-                ระบบอยู่ระหว่างเตรียมเชื่อมต่อกับตารางคำสั่งซื้อ (Orders & Transactions)
-                ยอดรายรับ-รายจ่ายจะปรากฏเมื่อมีการสั่งซื้อจริงผ่านระบบ
+              <Text style={styles.noticeTitle}>
+                {isEn ? 'Transaction & Order Integration' : 'ระบบบันทึกธุรกรรมคำสั่งซื้อ'}
               </Text>
-            </View>
-          </View>
-
-          {/* สรุปรายรับ-รายจ่าย (ยังไม่มีข้อมูล) */}
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryBox}>
-              <Text style={styles.summaryLabel}>รายรับรวม</Text>
-              <Text style={styles.summaryValueNull}>ยังไม่มีข้อมูล</Text>
-            </View>
-            <View style={styles.summaryBox}>
-              <Text style={styles.summaryLabel}>รายจ่ายรวม</Text>
-              <Text style={styles.summaryValueNull}>ยังไม่มีข้อมูล</Text>
+              <Text style={styles.noticeDesc}>
+                {isEn
+                  ? 'Orders placed via customer checkout are automatically deducted and saved in database tables.'
+                  : 'คำสั่งซื้อที่ลูกค้าชำระเงินเข้ามาจะถูกบันทึกและตัดสต็อกลงในฐานข้อมูล MySQL อัตโนมัติ'}
+              </Text>
             </View>
           </View>
         </ScrollView>
@@ -252,6 +259,7 @@ export default function FinancesScreen() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.offWhite },

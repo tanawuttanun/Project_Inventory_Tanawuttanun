@@ -1,34 +1,38 @@
 // app/brand.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND, COLORS, RADIUS, SPACING } from '../constants/theme';
-
-const VALUES = [
-  {
-    icon: 'shield-checkmark' as const,
-    title: 'คุณภาพมาตรฐานสากล',
-    desc: 'ผ่านการทดสอบความปลอดภัยแบตเตอรี่ตามมาตรฐาน CE / FCC / RoHS',
-  },
-  {
-    icon: 'flash' as const,
-    title: 'เทคโนโลยีชาร์จเร็ว',
-    desc: 'รองรับ PD และ Quick Charge สูงสุดถึง 100W ในบางรุ่น',
-  },
-  {
-    icon: 'infinite' as const,
-    title: 'รับประกันตลอดอายุการใช้งาน',
-    desc: 'รับประกันสินค้า 1-2 ปี พร้อมบริการหลังการขายทั่วประเทศ',
-  },
-  {
-    icon: 'leaf' as const,
-    title: 'ใส่ใจสิ่งแวดล้อม',
-    desc: 'บรรจุภัณฑ์รีไซเคิลได้ และโปรแกรมรับคืนแบตเตอรี่เก่า',
-  },
-];
+import { useLanguage } from '../context/LanguageContext';
 
 export default function BrandScreen() {
+  const { t, isEn } = useLanguage();
+
+  const values = [
+    {
+      icon: 'shield-checkmark' as const,
+      title: isEn ? 'International Standard Quality' : 'คุณภาพมาตรฐานสากล',
+      desc: isEn ? 'Certified battery safety compliant with CE / FCC / RoHS standards.' : 'ผ่านการทดสอบความปลอดภัยแบตเตอรี่ตามมาตรฐาน CE / FCC / RoHS',
+    },
+    {
+      icon: 'flash' as const,
+      title: isEn ? 'Fast Charging Technology' : 'เทคโนโลยีชาร์จเร็ว',
+      desc: isEn ? 'Supports PD and Quick Charge protocols up to 100W on selected models.' : 'รองรับ PD และ Quick Charge สูงสุดถึง 100W ในบางรุ่น',
+    },
+    {
+      icon: 'infinite' as const,
+      title: isEn ? 'Warranted Reliability' : 'รับประกันตลอดอายุการใช้งาน',
+      desc: isEn ? '1-2 year warranty with nationwide after-sales service and support.' : 'รับประกันสินค้า 1-2 ปี พร้อมบริการหลังการขายทั่วประเทศ',
+    },
+    {
+      icon: 'leaf' as const,
+      title: isEn ? 'Eco-Conscious Design' : 'ใส่ใจสิ่งแวดล้อม',
+      desc: isEn ? 'Recyclable packaging and sustainable battery trade-in initiatives.' : 'บรรจุภัณฑ์รีไซเคิลได้ และโปรแกรมรับคืนแบตเตอรี่เก่า',
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -40,15 +44,15 @@ export default function BrandScreen() {
           <Text style={styles.productLine}>{BRAND.productLine}</Text>
           <View style={styles.goldLine} />
           <Text style={styles.heroDesc}>
-            ผู้ผลิตและจัดจำหน่ายพาวเวอร์แบงก์พรีเมียมสัญชาติไทย
-            ก่อตั้งขึ้นเพื่อมอบพลังงานพกพาที่ปลอดภัย ทนทาน และดีไซน์หรูหรา
-            ในทุกไลฟ์สไตล์การใช้ชีวิต
+            {isEn
+              ? 'Premium Thai power bank manufacturer delivering safe, resilient, and elegantly designed portable power for modern everyday life.'
+              : 'ผู้ผลิตและจัดจำหน่ายพาวเวอร์แบงก์พรีเมียมสัญชาติไทย ก่อตั้งขึ้นเพื่อมอบพลังงานพกพาที่ปลอดภัย ทนทาน และดีไซน์หรูหรา ในทุกไลฟ์สไตล์การใช้ชีวิต'}
           </Text>
         </LinearGradient>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ปรัชญาของเรา</Text>
-          {VALUES.map((v) => (
+          <Text style={styles.sectionTitle}>{isEn ? 'Our Philosophy' : 'ปรัชญาของเรา'}</Text>
+          {values.map((v) => (
             <View key={v.title} style={styles.valueCard}>
               <View style={styles.valueIcon}>
                 <Ionicons name={v.icon} size={20} color={COLORS.gold} />
@@ -62,12 +66,12 @@ export default function BrandScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ติดต่อเรา</Text>
+          <Text style={styles.sectionTitle}>{isEn ? 'Contact Us' : 'ติดต่อเรา'}</Text>
           <View style={styles.contactCard}>
             <ContactRow icon="call" text="02-XXX-XXXX" />
             <ContactRow icon="logo-facebook" text="facebook.com/SanHanSomeIndustry" />
             <ContactRow icon="logo-instagram" text="@sanhansome.powerpay" />
-            <ContactRow icon="location" text="กรุงเทพมหานคร ประเทศไทย" />
+            <ContactRow icon="location" text={isEn ? 'Bangkok, Thailand' : 'กรุงเทพมหานคร ประเทศไทย'} />
           </View>
         </View>
       </ScrollView>
@@ -139,3 +143,4 @@ const styles = StyleSheet.create({
   contactRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   contactText: { fontSize: 13, color: COLORS.navy },
 });
+

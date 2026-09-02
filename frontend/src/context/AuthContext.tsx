@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '@/constants/api';
+import { appStorage } from '../utils/storage';
 
 export interface User {
   id: number | string;
@@ -14,17 +15,38 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const AUTH_URL = API_ENDPOINTS.LOGIN;
+const TOKEN_STORAGE_KEY = 'auth_token';
+const USER_STORAGE_KEY = 'auth_user';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Restore token and user on app startup
+  useEffect(() => {
+    (async () => {
+      try {
+        const savedToken = await appStorage.getItem(TOKEN_STORAGE_KEY);
+        const savedUserStr = await appStorage.getItem(USER_STORAGE_KEY);
+        if (savedToken && savedUserStr) {
+          const parsedUser = JSON.parse(savedUserStr);
+          setToken(savedToken);
+          setUser(parsedUser);
+        }
+      } catch (e) {
+        console.error('Failed to restore auth session:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
@@ -39,7 +61,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(false);
       
       if (response.ok) {
-        setToken(data.token);
         const returnedUser = data.user || {};
         const safeUser: User = {
           id: returnedUser.id,
@@ -48,7 +69,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: returnedUser.email || email,
           role: returnedUser.role === 'admin' ? 'admin' : 'user',
         };
+
+        setToken(data.token);
         setUser(safeUser);
+
+        // Persist to storage
+        await appStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+        await appStorage.setItem(USER_STORAGE_KEY, JSON.stringify(safeUser));
+
         return { ok: true };
       } else {
         return { ok: false, message: data.error || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' };
@@ -59,9 +87,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
+  const logout = async () => {
+    try {
+      await appStorage.removeItem(TOKEN_STORAGE_KEY);
+      await appStorage.removeItem(USER_STORAGE_KEY);
+    } catch (e) {
+      console.error('Error removing auth from storage:', e);
+    } finally {
+      setUser(null);
+      setToken(null);
+    }
   };
 
   return (
