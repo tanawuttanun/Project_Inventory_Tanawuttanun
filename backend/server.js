@@ -195,11 +195,40 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 3. ดึงข้อมูลสินค้า (ตาราง Tanawuttanun_Hom_products) - ทุกคนที่ล็อกอินเข้าดูได้
-app.get('/api/products', authToken, async (req, res) => {
+// 3. ดึงข้อมูลสินค้าทั้งหมด (ตาราง Tanawuttanun_Hom_products) - Public API ไม่ต้องล็อกอิน
+app.get('/api/products', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM Tanawuttanun_Hom_products ORDER BY id ASC');
-        res.json(rows);
+        const [rows] = await pool.query(
+            `SELECT id, name, model, capacity, price, stock, imageUrl, colors, features
+             FROM Tanawuttanun_Hom_products
+             ORDER BY id ASC`
+        );
+
+        const products = rows.map((row) => {
+            let colors = [];
+            let features = [];
+            try { colors = JSON.parse(row.colors); } catch (e) { colors = []; }
+            try { features = JSON.parse(row.features); } catch (e) { features = []; }
+
+            return {
+                id: row.id,
+                name: row.name,
+                brand: row.model || '',      // ใช้คอลัมน์ model เป็น brand
+                model: row.model || '',
+                capacity: row.capacity || '',
+                price: Number(row.price) || 0,
+                stock: Number(row.stock) || 0,
+                imageUrl: row.imageUrl || '',
+                colors: Array.isArray(colors) ? colors : [],
+                features: Array.isArray(features) ? features : []
+            };
+        });
+
+        res.json({
+            message: 'Products fetched successfully',
+            count: products.length,
+            products
+        });
     } catch (e) {
         console.error('Products Error:', e.message);
         res.status(500).json({ error: 'Failed to fetch products' });
