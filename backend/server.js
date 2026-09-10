@@ -213,22 +213,20 @@ app.get('/api/products', async (req, res) => {
             return {
                 id: row.id,
                 name: row.name,
-                brand: row.model || '',      // ใช้คอลัมน์ model เป็น brand
+                brand: row.model || '',      // ตารางนี้ใช้คอลัมน์ model เป็นยี่ห้อ
                 model: row.model || '',
                 capacity: row.capacity || '',
                 price: Number(row.price) || 0,
                 stock: Number(row.stock) || 0,
+                image: row.imageUrl || '',
                 imageUrl: row.imageUrl || '',
                 colors: Array.isArray(colors) ? colors : [],
                 features: Array.isArray(features) ? features : []
             };
         });
 
-        res.json({
-            message: 'Products fetched successfully',
-            count: products.length,
-            products
-        });
+        // ส่งกลับเป็น JSON array ตรง ๆ (โครงสร้างเดียวกับที่ frontend เดิมใช้)
+        res.json(products);
     } catch (e) {
         console.error('Products Error:', e.message);
         res.status(500).json({ error: 'Failed to fetch products' });
