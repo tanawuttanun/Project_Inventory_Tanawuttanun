@@ -4,8 +4,10 @@
 
 ```text
 Inventory/
-├── backend/    # Node.js + Express API & Database
-└── frontend/   # Expo + React Native App
+├── backend/           # Node.js + Express API & Database
+├── frontend/          # Expo + React Native App
+├── group-aggregator/  # Central API รวมข้อมูลสินค้าของสมาชิกทุกคนในกลุ่ม
+└── analysis/          # K-Means จัดกลุ่มสินค้า + กราฟผลลัพธ์
 ```
 
 ---
@@ -28,6 +30,17 @@ npm install
 npx expo start
 ```
 - สามารถสลับการทดสอบระหว่าง Web, Android หรือ iOS ได้
+
+### 3. ส่วน AI/ML (K-Means จัดกลุ่มสินค้า)
+```bash
+cd backend && npm run analytics     # Private API ส่งข้อมูลสินค้า + ยอดขายจริง (พอร์ต 3021)
+cd group-aggregator && python aggregator.py   # รวมข้อมูลทั้งกลุ่ม (พอร์ต 6000)
+cd analysis && python clustering.py           # จัดกลุ่ม + ได้กราฟใน analysis/output/
+```
+- วิธีติดตั้งและคำสั่งทั้งหมดอยู่ใน [`analysis/README.md`](analysis/README.md)
+- **ในแอปก็มีหน้า K-Means ให้ดูสด** — เมนู → "จัดกลุ่มราคา (K-Means)" (หรือจากหน้าการเงิน)
+  คำนวณบนเครื่องด้วย [`frontend/src/utils/kmeans.ts`](frontend/src/utils/kmeans.ts) ปรับค่า k ได้ทันที
+  ใช้ข้อมูลสดจาก `GET /api/products` — ไม่ต้องรัน Python
 
 ---
 

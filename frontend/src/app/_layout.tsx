@@ -139,6 +139,12 @@ function RootNavigator() {
           }}
         />
         <Tabs.Screen
+          name="clusters"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
           name="settings"
           options={{
             href: null,

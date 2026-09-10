@@ -361,7 +361,11 @@ export default function HomeScreen() {
             <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/brand'); }}>
               <Text style={styles.menuText}>{t('nav.brand')}</Text>
             </TouchableOpacity>
-            
+
+            <TouchableOpacity onPress={() => { setMenuVisible(false); router.push('/clusters'); }}>
+              <Text style={styles.menuText}>{t('nav.clusters')}</Text>
+            </TouchableOpacity>
+
             {/* 🔒 โซนพิเศษสำหรับ Admin (Finances & เพิ่มสินค้า) */}
             {user?.role === 'admin' && (
               <>

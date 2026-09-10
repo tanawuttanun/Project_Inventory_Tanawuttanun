@@ -181,6 +181,24 @@ export default function FinancesScreen() {
             </View>
           </View>
 
+          {/* ทางลัดไปหน้าจัดกลุ่มราคาสินค้าด้วย K-Means */}
+          <TouchableOpacity style={styles.kmeansCard} onPress={() => router.push('/clusters')}>
+            <View style={styles.kmeansIconWrap}>
+              <Ionicons name="git-network-outline" size={22} color={COLORS.gold} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.kmeansTitle}>
+                {isEn ? 'Price Clusters (K-Means)' : 'จัดกลุ่มราคาสินค้า (K-Means)'}
+              </Text>
+              <Text style={styles.kmeansDesc}>
+                {isEn
+                  ? 'Group products by price and stock, tune k live'
+                  : 'จัดกลุ่มสินค้าตามราคาและสต็อก ปรับค่า k ได้ทันที'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={COLORS.grayText} />
+          </TouchableOpacity>
+
           {/* สินค้าใกล้หมด (Low Stock Warning) */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>
@@ -479,4 +497,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
+
+  // K-Means shortcut card
+  kmeansCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  kmeansIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(212,175,55,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kmeansTitle: { fontSize: 14, fontWeight: '800', color: COLORS.navy },
+  kmeansDesc: { fontSize: 11.5, color: COLORS.grayText, marginTop: 2 },
 });
